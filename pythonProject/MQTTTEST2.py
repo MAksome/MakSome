@@ -61,6 +61,7 @@ with open('direction.csv','w',newline='') as csvfile:                           
         spamwriter.writerow(['2','2','0','1','1','0',])
 
 
+
 # if haveMoney:
 #     if hungry:
 #         eat()
