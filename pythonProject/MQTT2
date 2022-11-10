@@ -1,0 +1,52 @@
+import paho.mqtt.client as paho
+import csv
+topic="GGEZkmutt"
+def on_connect(client, userdata, flags, rc):
+    print('CONNACK received with code %d.' % (rc))
+    
+def on_subscribe(client, userdata, mid, granted_qos):
+    print("Subscribed: " + str(granted_qos))
+
+def on_message(client, userdata, msg):
+    message=msg.payload.decode("utf-8")
+    print('on message msg.payload=',msg.payload.decode)  #สั่ง print in window
+    # print(msg.payload)
+    # print(msg.payload=='hello')
+    if message =='hello':
+        client.publish(topic, 10)
+    elif message =='90':
+        client.publish(topic,'uturn')
+
+    # print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))    
+    # temperature = ((msg.topic+" "+str(msg.qos)+" "+str(msg.payload)) )
+    # (rc, mid) = client.publish('MQTTkmutt', str(temperature), qos=1)
+
+def on_publish(client, userdata, mid):
+    print("client: "+str(client))
+    print("userdata: "+str(userdata))
+    print("mid: "+str(mid))
+
+client = paho.Client()
+client.on_connect = on_connect
+client.on_subscribe = on_subscribe
+client.on_message = on_message
+client.connect('broker.mqttdashboard.com', 1883)
+client.subscribe(topic, qos=0)
+# client.publish("GGEZkmutt",10)
+
+# stack = [0,0,-90,0] #คำสั่งuturn
+# stack.append(90)
+# print(stack.pop())
+
+with open('direction.csv','w',newline='') as csvfile:
+    spamwriter = csv.writer(csvfile, delimiter=',',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
+    spamwriter.writerow(['Spam', 'Lovely Spam', 'Wonderful Spam'])
+# if haveMoney:
+#     if hungry:
+#         eat()
+
+
+
+client.loop_forever()  #loopต้งไว้ท้ายสุดเท่านั้น  
