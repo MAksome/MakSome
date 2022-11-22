@@ -1,65 +1,74 @@
-import paho.mqtt.client as paho
+# python 3.6
 
-def on_connect(client, userdata, flags, rc):
-    print('CONNACK received with code %d.' % (rc))
-    
+import random
+import time
+import csv
+import pandas
 
-client = paho.Client()
-client.on_connect = on_connect
-client.connect('broker.mqttdashboard.com', 1883)
-####
+from paho.mqtt import client as mqtt_client
 
-import paho.mqtt.client as paho
 
-def on_subscribe(client, userdata, mid, granted_qos):
-    print("Subscribed: "+str(mid)+" "+str(granted_qos))
+broker = 'broker.mqttdashboard.com'
+port = 1883
+topic = "python/mqtt"
+# generate client ID with pub prefix randomly
+client_id = f'python-mqtt-{random.randint(0, 1000)}'
+# username = 'emqx'
+# password = 'public'
+
+def connect_mqtt():
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connected to MQTT Broker!")
+        else:
+            print("Failed to connect, return code %d\n", rc)
+
+    client = mqtt_client.Client(client_id)
+    # client.username_pw_set(username, password)
+    client.on_connect = on_connect
+    client.connect(broker, port)
+    return client
+
+
+def publish(client):
+    msg_count = 0
+    while True:
+        time.sleep(1)
+        msg = f"messages: {msg_count}"
+        result = client.publish(topic, msg)
+        # result: [0, 1]
+        status = result[0]
+        if status == 0:
+            print(f"Send `{msg}` to topic `{topic}`")
+        else:
+            print(f"Failed to send message to topic {topic}")
+        msg_count += 1
+
+def subscribe(client: mqtt_client):
+    print('subscribe client=',client)
 
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))    
-    
-client = paho.Client()
-client.on_subscribe = on_subscribe
-client.on_message = on_message
-client.connect('broker.mqttdashboard.com', 1883)
-client.subscribe('XXXXXXX', qos=1)
+    print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+    positionin=msg.payload.decode().split(',')
+    # str="A B C D"
+    # arr=str.split()
+    # print(arr)
+    position = '(' + positionin[0] + ',' +positionin[2] +')'
+    print(position)
+    file = open('updatemap.csv', 'w',newline='')
+    writer = csv.writer(file)
+    writer.writerow(['Cell' , 'E','W','N','S'])
+    writer.writerow([position,positionin[2],positionin[3],positionin[4],positionin[5]])
+    file.close()
 
 
-
-client.loop_forever()
-
-
-import paho.mqtt.client as paho
-import time
-
-def on_publish(client, userdata, mid):
-    print("mid: "+str(mid))
- 
-client = paho.Client()
-client.on_publish = on_publish
-client.connect('broker.mqttdashboard.com', 1883)
-client.loop_start()
-
-while True:
-    temperature = (print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload)) )
-    (rc, mid) = client.publish('XXXXXXX', str(temperature), qos=1)
-    time.sleep(30)
-# 
-#   ###
-
-# import paho.mqtt.client as paho
-
-# def on_subscribe(client, userdata, mid, granted_qos):
-#     print("Subscribed: "+str(mid)+" "+str(granted_qos))
-
-# def on_message(client, userdata, msg):
-#     print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))    
-    
-# client = paho.Client()
-# client.on_subscribe = on_subscribe
-# client.on_message = on_message
-# client.connect('broker.mqttdashboard.com', 1883)
-# client.subscribe('encyclopedia/#', qos=1)
+def run():
+    client = connect_mqtt()
+    subscribe(client)
+    client.subscribe('mqttin')
+    client.on_message = on_message
+    client.loop_forever()
 
 
-
-# client.loop_forever()
+if __name__ == '__main__':
+    run()
